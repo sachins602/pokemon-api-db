@@ -4,28 +4,50 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
+	//"time"
+
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/joho/godotenv"
 	"github.com/mtslzr/pokeapi-go"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 )
+
+var db *gorm.DB
 
 func main() {
 
 	// Load environment variables from file.
-	if err := godotenv.Load(); err != nil {
+	err := godotenv.Load(".env")
+	if err != nil {
 		log.Fatalf("failed to load environment variables: %v", err)
 	}
 
-	// Connect to PlanetScale database using DSN environment variable.
-	db, err := gorm.Open(mysql.Open(os.Getenv("DSN")), &gorm.Config{
-		DisableForeignKeyConstraintWhenMigrating: true,
-	})
+	Dbdriver := os.Getenv("DB_DRIVER")
+	DbHost := os.Getenv("DB_HOST")
+	DbUser := os.Getenv("DB_USER")
+	DbPassword := os.Getenv("DB_PASSWORD")
+	DbName := os.Getenv("DB_NAME")
+	DbPort := os.Getenv("DB_PORT")
+
+	DBURL := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local", DbUser, DbPassword, DbHost, DbPort, DbName)
+
+	db, err = gorm.Open("mysql", DBURL)
+
 	if err != nil {
-		log.Fatalf("failed to connect to PlanetScale: %v", err)
+		fmt.Printf("Cannot connect to %s database", Dbdriver)
+		log.Fatal("This is the error:", err)
+	} else {
+		fmt.Printf("We are connected to the %s database", Dbdriver)
 	}
+
+	// Connect to PlanetScale database using DSN environment variable.
+	// db, err := gorm.Open(mysql.Open(os.Getenv("DSN")), &gorm.Config{
+	// 	DisableForeignKeyConstraintWhenMigrating: true,
+	// })
+	// if err != nil {
+	// 	log.Fatalf("failed to connect to PlanetScale: %v", err)
+	// }
 
 	for index := 1; index < 500; index++ {
 		i := fmt.Sprintf("%d", index)
@@ -53,7 +75,7 @@ func main() {
 		fmt.Println("Pokemon added to database")
 
 		fmt.Println(name, attack, spriteUrl)
-		time.Sleep(time.Millisecond * 100)
+		//time.Sleep(time.Millisecond * 100)
 	}
 
 }
